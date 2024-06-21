@@ -1,0 +1,35 @@
+package com.ingramcontent.dataverse;
+
+import com.ingramcontent.dataverse.utility.Constant;
+import com.ingramcontent.dataverse.helper.LoadItemDataHelper;
+
+import com.ingramcontent.dataverse.model.Signal;
+import com.ingramcontent.dataverse.model.Xformer;
+import com.ingramcontent.dataverse.model.PipelineThreshold;
+import com.ingramcontent.dataverse.model.Producer;
+import com.ingramcontent.dataverse.model.DataFilter;
+
+rule "Validate Initial Load Pipeline"
+    ruleflow-group 'pipelineCodeRule'
+	when 
+	    threshold: PipelineThreshold();
+		signal: Signal(threshold != null &&
+                threshold.getThreshold() != null &&
+            	threshold.getThreshold().get(pipelineCode) != null &&
+            	totalRecord > threshold.getThreshold().get(pipelineCode));
+		xformer: Xformer();
+	then
+		xformer.setIsInitialLoad(Constant.TRUE_VAL);
+	end
+
+
+rule "Data Filter"
+    ruleflow-group 'dataFilterRule'
+	when 
+	    dataFilter: DataFilter();
+	    producerRequest: Producer();
+	then
+		LoadItemDataHelper.filterData(dataFilter,  producerRequest);
+	end		
+	
+	
